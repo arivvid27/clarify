@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: 'rgba(255,255,255,0.6)',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   sectionTitleActive: {
     color: 'white',
