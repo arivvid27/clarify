@@ -15,7 +15,6 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-// Navigation items
 const navigationItems = [
   { id: 'home', icon: 'home-outline', label: 'Home' },
   { id: 'dashboard', icon: 'grid-outline', label: 'Dashboard' },
@@ -24,14 +23,12 @@ const navigationItems = [
   { id: 'profile', icon: 'person-outline', label: 'Profile' },
 ];
 
-// Sections data
 const sections = [
   { id: 'section1', title: 'Section 1' },
   { id: 'section2', title: 'Section 2' },
   { id: 'section3', title: 'Section 3' },
 ];
 
-// Widget Component
 const Widget: React.FC<{
   title: string;
   color: string;
@@ -73,7 +70,6 @@ const Widget: React.FC<{
     }
   };
 
-  // Map size to style key (explicitly typed to ViewStyle keys)
   const widgetSizeStyleMap: Record<'small' | 'medium' | 'large', 'widgetSmall' | 'widgetMedium' | 'widgetLarge'> = {
     small: 'widgetSmall',
     medium: 'widgetMedium',
@@ -94,7 +90,6 @@ const Widget: React.FC<{
   );
 };
 
-// Navigation Component
 const Navigation: React.FC<{
   activeItem: string;
   onItemPress: (id: string) => void;
@@ -128,7 +123,6 @@ const Navigation: React.FC<{
             ))}
           </View>
           
-          {/* User Profile Section */}
           <View style={styles.userSection}>
             <View style={styles.userAvatar}>
               <Ionicons name="person" size={20} color="white" />
@@ -140,7 +134,6 @@ const Navigation: React.FC<{
   );
 };
 
-// Section Header Component
 const SectionHeader: React.FC<{ title: string; isActive: boolean; onPress: () => void }> = ({ 
   title, 
   isActive, 
@@ -158,7 +151,6 @@ const SectionHeader: React.FC<{ title: string; isActive: boolean; onPress: () =>
   );
 };
 
-// Main Content Component
 const MainContent: React.FC<{ activeSection: string }> = ({ activeSection }) => {
   const renderSectionContent = () => {
     switch (activeSection) {
@@ -231,7 +223,6 @@ export default function App() {
           />
           
           <View style={styles.contentArea}>
-            {/* Section Headers */}
             <View style={styles.sectionHeaders}>
               {sections.map((section) => (
                 <SectionHeader
@@ -243,7 +234,6 @@ export default function App() {
               ))}
             </View>
             
-            {/* Main Content */}
             <MainContent activeSection={activeSection} />
           </View>
         </SafeAreaView>
