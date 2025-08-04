@@ -204,7 +204,6 @@ const MainContent: React.FC<{ activeSection: string }> = ({ activeSection }) => 
   );
 };
 
-// Main App Component
 export default function App() {
   const [activeNavItem, setActiveNavItem] = useState('home');
   const [activeSection, setActiveSection] = useState('section2');
@@ -293,6 +292,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.1)',
+    alignContent: 'center',
   },
   userAvatar: {
     width: 40,
