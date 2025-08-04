@@ -1,17 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  Animated,
   Dimensions,
-  PanResponder,
-  Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
@@ -19,141 +17,53 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 // Navigation items
 const navigationItems = [
+  { id: 'home', icon: 'home-outline', label: 'Home' },
   { id: 'dashboard', icon: 'grid-outline', label: 'Dashboard' },
   { id: 'analytics', icon: 'analytics-outline', label: 'Analytics' },
   { id: 'settings', icon: 'settings-outline', label: 'Settings' },
   { id: 'profile', icon: 'person-outline', label: 'Profile' },
 ];
 
-// Sample widgets
-interface Widget {
-  id: string;
-  title: string;
-  type: 'chart' | 'stat' | 'progress';
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  color: string;
-}
-
-const initialWidgets: Widget[] = [
-  {
-    id: '1',
-    title: 'Revenue',
-    type: 'stat',
-    x: 20,
-    y: 20,
-    width: 160,
-    height: 120,
-    color: '#007AFF',
-  },
-  {
-    id: '2',
-    title: 'Users',
-    type: 'chart',
-    x: 200,
-    y: 20,
-    width: 160,
-    height: 120,
-    color: '#34C759',
-  },
-  {
-    id: '3',
-    title: 'Performance',
-    type: 'progress',
-    x: 20,
-    y: 160,
-    width: 160,
-    height: 120,
-    color: '#FF9500',
-  },
-  {
-    id: '4',
-    title: 'Conversion',
-    type: 'stat',
-    x: 200,
-    y: 160,
-    width: 160,
-    height: 120,
-    color: '#FF3B30',
-  },
+// Sections data
+const sections = [
+  { id: 'section1', title: 'Section 1' },
+  { id: 'section2', title: 'Section 2' },
+  { id: 'section3', title: 'Section 3' },
 ];
 
 // Widget Component
-const DraggableWidget: React.FC<{
-  widget: Widget;
-  onDrag: (id: string, x: number, y: number) => void;
-}> = ({ widget, onDrag }) => {
-  const pan = useRef(new Animated.ValueXY({ x: widget.x, y: widget.y })).current;
-  const scale = useRef(new Animated.Value(1)).current;
-
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: () => {
-      pan.setOffset({
-        x: pan.x instanceof Animated.Value ? (pan.x as any).getValue() : 0,
-        y: pan.y instanceof Animated.Value ? (pan.y as any).getValue() : 0,
-      });
-      pan.setValue({ x: 0, y: 0 });
-      
-      Animated.spring(scale, {
-        toValue: 1.05,
-        useNativeDriver: true,
-      }).start();
-    },
-    onPanResponderMove: Animated.event(
-      [null, { dx: pan.x, dy: pan.y }],
-      { useNativeDriver: false }
-    ),
-    onPanResponderRelease: (evt, gestureState) => {
-      pan.flattenOffset();
-      
-      const currentX = pan.x instanceof Animated.Value ? (pan.x as any).getValue() : 0;
-      const currentY = pan.y instanceof Animated.Value ? (pan.y as any).getValue() : 0;
-      const newX = Math.max(0, Math.min(screenWidth - widget.width - 100, currentX));
-      const newY = Math.max(0, Math.min(screenHeight - widget.height - 200, currentY));
-      
-      pan.setValue({ x: newX, y: newY });
-      onDrag(widget.id, newX, newY);
-      
-      Animated.spring(scale, {
-        toValue: 1,
-        useNativeDriver: true,
-      }).start();
-    },
-  });
-
-  React.useEffect(() => {
-    pan.setValue({ x: widget.x, y: widget.y });
-  }, [widget.x, widget.y]);
-
-  const renderWidgetContent = () => {
-    switch (widget.type) {
+const Widget: React.FC<{
+  title: string;
+  color: string;
+  size: 'small' | 'medium' | 'large';
+  type: 'chart' | 'stat' | 'progress';
+}> = ({ title, color, size, type }) => {
+  const renderContent = () => {
+    switch (type) {
       case 'stat':
         return (
           <View style={styles.widgetContent}>
+            <Text style={styles.widgetTitle}>{title}</Text>
             <Text style={styles.widgetValue}>$24.8K</Text>
-            <Text style={styles.widgetLabel}>{widget.title}</Text>
             <Text style={styles.widgetChange}>+12.5%</Text>
           </View>
         );
       case 'chart':
         return (
           <View style={styles.widgetContent}>
-            <Text style={styles.widgetLabel}>{widget.title}</Text>
+            <Text style={styles.widgetTitle}>{title}</Text>
             <View style={styles.chartPlaceholder}>
-              <Ionicons name="trending-up" size={24} color="white" />
+              <Ionicons name="trending-up" size={32} color="rgba(255,255,255,0.8)" />
             </View>
-            <Text style={styles.widgetValue}>1,847</Text>
+            <Text style={styles.widgetSubtext}>Trending upward</Text>
           </View>
         );
       case 'progress':
         return (
           <View style={styles.widgetContent}>
-            <Text style={styles.widgetLabel}>{widget.title}</Text>
+            <Text style={styles.widgetTitle}>{title}</Text>
             <View style={styles.progressContainer}>
-              <View style={[styles.progressBar, { backgroundColor: widget.color }]} />
+              <View style={[styles.progressBar, { backgroundColor: color, width: '78%' }]} />
             </View>
             <Text style={styles.widgetValue}>78%</Text>
           </View>
@@ -163,68 +73,36 @@ const DraggableWidget: React.FC<{
     }
   };
 
+  // Map size to style key (explicitly typed to ViewStyle keys)
+  const widgetSizeStyleMap: Record<'small' | 'medium' | 'large', 'widgetSmall' | 'widgetMedium' | 'widgetLarge'> = {
+    small: 'widgetSmall',
+    medium: 'widgetMedium',
+    large: 'widgetLarge',
+  };
+
   return (
-    <Animated.View
-      style={[
-        styles.widget,
-        {
-          width: widget.width,
-          height: widget.height,
-          transform: [
-            { translateX: pan.x },
-            { translateY: pan.y },
-            { scale },
-          ],
-        },
-      ]}
-      {...panResponder.panHandlers}
-    >
-      <BlurView intensity={80} style={styles.widgetBlur}>
+    <View style={[styles.widget, styles[widgetSizeStyleMap[size] as 'widgetSmall' | 'widgetMedium' | 'widgetLarge']]}>
+      <BlurView intensity={20} style={styles.widgetBlur}>
         <LinearGradient
-          colors={[`${widget.color}40`, `${widget.color}20`]}
+          colors={[`${color}15`, `${color}08`]}
           style={styles.widgetGradient}
         >
-          {renderWidgetContent()}
+          {renderContent()}
         </LinearGradient>
       </BlurView>
-    </Animated.View>
+    </View>
   );
 };
 
 // Navigation Component
 const Navigation: React.FC<{
-  isExpanded: boolean;
-  onToggle: () => void;
   activeItem: string;
   onItemPress: (id: string) => void;
-}> = ({ isExpanded, onToggle, activeItem, onItemPress }) => {
-  const navAnimation = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
-
-  React.useEffect(() => {
-    Animated.timing(navAnimation, {
-      toValue: isExpanded ? 1 : 0,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  }, [isExpanded]);
-
-  const navWidth = navAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [70, 200],
-  });
-
+}> = ({ activeItem, onItemPress }) => {
   return (
-    <Animated.View style={[styles.navigation, { width: navWidth }]}>
-      <BlurView intensity={100} style={styles.navBlur}>
+    <View style={styles.navigation}>
+      <BlurView intensity={80} style={styles.navBlur}>
         <View style={styles.navContent}>
-          <TouchableOpacity style={styles.navToggle} onPress={onToggle}>
-            <Ionicons 
-              name={isExpanded ? "chevron-back" : "menu"} 
-              size={24} 
-              color="white" 
-            />
-          </TouchableOpacity>
-          
           <View style={styles.navItems}>
             {navigationItems.map((item) => (
               <TouchableOpacity
@@ -237,92 +115,137 @@ const Navigation: React.FC<{
               >
                 <Ionicons 
                   name={item.icon as any} 
-                  size={24} 
-                  color={activeItem === item.id ? "#007AFF" : "white"} 
+                  size={20} 
+                  color={activeItem === item.id ? "#007AFF" : "rgba(255,255,255,0.8)"} 
                 />
-                {isExpanded && (
-                  <Animated.View
-                    style={{
-                      opacity: navAnimation,
-                      transform: [
-                        {
-                          translateX: navAnimation.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [-20, 0],
-                          }),
-                        },
-                      ],
-                    }}
-                  >
-                    <Text style={[
-                      styles.navLabel,
-                      activeItem === item.id && styles.navLabelActive,
-                    ]}>
-                      {item.label}
-                    </Text>
-                  </Animated.View>
-                )}
+                <Text style={[
+                  styles.navLabel,
+                  activeItem === item.id && styles.navLabelActive,
+                ]}>
+                  {item.label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
+          
+          {/* User Profile Section */}
+          <View style={styles.userSection}>
+            <View style={styles.userAvatar}>
+              <Ionicons name="person" size={20} color="white" />
+            </View>
+          </View>
         </View>
       </BlurView>
-    </Animated.View>
+    </View>
+  );
+};
+
+// Section Header Component
+const SectionHeader: React.FC<{ title: string; isActive: boolean; onPress: () => void }> = ({ 
+  title, 
+  isActive, 
+  onPress 
+}) => {
+  return (
+    <TouchableOpacity 
+      style={[styles.sectionTab, isActive && styles.sectionTabActive]} 
+      onPress={onPress}
+    >
+      <Text style={[styles.sectionTitle, isActive && styles.sectionTitleActive]}>
+        {title}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+// Main Content Component
+const MainContent: React.FC<{ activeSection: string }> = ({ activeSection }) => {
+  const renderSectionContent = () => {
+    switch (activeSection) {
+      case 'section1':
+        return (
+          <View style={styles.gridContainer}>
+            <View style={styles.gridRow}>
+              <Widget title="Revenue" color="#007AFF" size="medium" type="stat" />
+              <Widget title="Users" color="#34C759" size="medium" type="chart" />
+            </View>
+            <View style={styles.gridRow}>
+              <Widget title="Performance" color="#FF9500" size="small" type="progress" />
+              <Widget title="Analytics" color="#FF3B30" size="large" type="chart" />
+            </View>
+          </View>
+        );
+      case 'section2':
+        return (
+          <View style={styles.gridContainer}>
+            <View style={styles.gridRow}>
+              <Widget title="Sales" color="#5856D6" size="large" type="stat" />
+              <Widget title="Growth" color="#AF52DE" size="small" type="progress" />
+            </View>
+            <View style={styles.gridRow}>
+              <Widget title="Conversion" color="#FF2D92" size="medium" type="chart" />
+              <Widget title="Traffic" color="#32ADE6" size="medium" type="stat" />
+            </View>
+          </View>
+        );
+      case 'section3':
+        return (
+          <View style={styles.gridContainer}>
+            <View style={styles.gridRow}>
+              <Widget title="Reports" color="#30D158" size="medium" type="chart" />
+              <Widget title="Metrics" color="#FF9F0A" size="medium" type="progress" />
+            </View>
+            <View style={styles.gridRow}>
+              <Widget title="Overview" color="#007AFF" size="large" type="stat" />
+            </View>
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <ScrollView style={styles.mainContent} showsVerticalScrollIndicator={false}>
+      {renderSectionContent()}
+    </ScrollView>
   );
 };
 
 // Main App Component
 export default function App() {
-  const [widgets, setWidgets] = useState<Widget[]>(initialWidgets);
-  const [navExpanded, setNavExpanded] = useState(false);
-  const [activeNavItem, setActiveNavItem] = useState('dashboard');
-  const mainContentMargin = useRef(new Animated.Value(70)).current;
-
-  React.useEffect(() => {
-    Animated.timing(mainContentMargin, {
-      toValue: navExpanded ? 220 : 90,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  }, [navExpanded]);
-
-  const handleWidgetDrag = (id: string, x: number, y: number) => {
-    setWidgets(prev => prev.map(widget => 
-      widget.id === id ? { ...widget, x, y } : widget
-    ));
-  };
+  const [activeNavItem, setActiveNavItem] = useState('home');
+  const [activeSection, setActiveSection] = useState('section2');
 
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <LinearGradient
-        colors={['#000000', '#1a1a1a', '#2d2d2d']}
+        colors={['#0a0a0a', '#1a1a1a', '#2a2a2a']}
         style={styles.container}
       >
         <SafeAreaView style={styles.safeArea}>
           <Navigation
-            isExpanded={navExpanded}
-            onToggle={() => setNavExpanded(!navExpanded)}
             activeItem={activeNavItem}
             onItemPress={setActiveNavItem}
           />
           
-          <Animated.View style={[styles.mainContent, { marginLeft: mainContentMargin }]}>
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>Dashboard</Text>
-              <Text style={styles.headerSubtitle}>Welcome back! Here's your overview</Text>
-            </View>
-            
-            <View style={styles.widgetContainer}>
-              {widgets.map((widget) => (
-                <DraggableWidget
-                  key={widget.id}
-                  widget={widget}
-                  onDrag={handleWidgetDrag}
+          <View style={styles.contentArea}>
+            {/* Section Headers */}
+            <View style={styles.sectionHeaders}>
+              {sections.map((section) => (
+                <SectionHeader
+                  key={section.id}
+                  title={section.title}
+                  isActive={activeSection === section.id}
+                  onPress={() => setActiveSection(section.id)}
                 />
               ))}
             </View>
-          </Animated.View>
+            
+            {/* Main Content */}
+            <MainContent activeSection={activeSection} />
+          </View>
         </SafeAreaView>
       </LinearGradient>
     </SafeAreaProvider>
@@ -338,128 +261,170 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   navigation: {
-    position: 'absolute',
-    left: 20,
-    top: Platform.OS === 'ios' ? 60 : 40,
-    bottom: 20,
-    borderRadius: 25,
+    width: 200,
+    margin: 12,
+    borderRadius: 20,
     overflow: 'hidden',
-    zIndex: 1000,
   },
   navBlur: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   navContent: {
     flex: 1,
-    padding: 20,
-  },
-  navToggle: {
-    padding: 10,
-    marginBottom: 20,
-    alignSelf: 'flex-start',
+    padding: 16,
+    justifyContent: 'space-between',
   },
   navItems: {
     flex: 1,
+    paddingTop: 20,
   },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
+    borderRadius: 10,
+    marginBottom: 4,
   },
   navItemActive: {
-    backgroundColor: 'rgba(0, 122, 255, 0.2)',
+    backgroundColor: 'rgba(0, 122, 255, 0.15)',
   },
   navLabel: {
-    color: 'white',
-    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 15,
     marginLeft: 12,
     fontWeight: '500',
   },
   navLabelActive: {
     color: '#007AFF',
+    fontWeight: '600',
   },
-  mainContent: {
+  userSection: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contentArea: {
     flex: 1,
-    padding: 20,
+    margin: 12,
+    marginLeft: 0,
   },
-  header: {
-    marginBottom: 30,
-    marginTop: 20,
+  sectionHeaders: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 12,
+    padding: 4,
   },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
-  },
-  widgetContainer: {
+  sectionTab: {
     flex: 1,
-    position: 'relative',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
   },
-  widget: {
-    position: 'absolute',
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+  sectionTabActive: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
-  widgetBlur: {
-    flex: 1,
-    borderRadius: 16,
-  },
-  widgetGradient: {
-    flex: 1,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  widgetContent: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'space-between',
-  },
-  widgetLabel: {
-    color: 'rgba(255,255,255,0.8)',
+  sectionTitle: {
+    color: 'rgba(255,255,255,0.6)',
     fontSize: 14,
     fontWeight: '500',
   },
+  sectionTitleActive: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  mainContent: {
+    flex: 1,
+  },
+  gridContainer: {
+    flex: 1,
+    gap: 12,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  widget: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  widgetSmall: {
+    flex: 1,
+    minHeight: 120,
+  },
+  widgetMedium: {
+    flex: 1,
+    minHeight: 160,
+  },
+  widgetLarge: {
+    flex: 1,
+    minHeight: 200,
+  },
+  widgetBlur: {
+    flex: 1,
+  },
+  widgetGradient: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  widgetContent: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'space-between',
+  },
+  widgetTitle: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
   widgetValue: {
     color: 'white',
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
+    marginBottom: 4,
   },
   widgetChange: {
     color: '#34C759',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
+  },
+  widgetSubtext: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    fontWeight: '500',
   },
   chartPlaceholder: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginVertical: 16,
   },
   progressContainer: {
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 3,
     overflow: 'hidden',
+    marginVertical: 12,
   },
   progressBar: {
     height: '100%',
-    width: '78%',
-    borderRadius: 4,
+    borderRadius: 3,
   },
 });
